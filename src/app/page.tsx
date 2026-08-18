@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { InputForm } from '@/components/InputForm';
 import { RecentInvestigations } from '@/components/RecentInvestigations';
+import { WalletGatePanel } from '@/components/WalletGatePanel';
 import { CORPUS, type CorpusEntry } from '@/data/corpus';
 
 export default function HomePage() {
@@ -51,12 +52,16 @@ export default function HomePage() {
         />
         <MethodologyCard
           title="Live blast-radius"
-          body="Paste your wallet. Live allowances and balances surfaced against the queried contract. DefiLlama-priced exposure."
+          body="Paste your wallet, or connect it once. Live allowances and balances surfaced against the queried contract. DefiLlama-priced exposure."
         />
         <MethodologyCard
           title="Honest report card"
           body="TP / TN / FP / FN published at headline size. Even when the numbers look bad. Grow the corpus from public sources."
         />
+      </section>
+
+      <section>
+        <WalletGatePanel />
       </section>
 
       <FeedbackStrip />

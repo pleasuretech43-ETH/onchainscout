@@ -1,17 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  CHAIN_HEX,
-  CHAIN_NAME,
-  WalletState,
-  connectWallet,
-  detectProvider,
-  disconnectWallet,
-  readWallet,
-  shortAddress,
-  walletInstalled,
-} from '@/lib/wallet';
+import { useWallet } from '@/lib/useWallet';
+import { CHAIN_HEX, WalletState, shortAddress } from '@/lib/wallet';
 
 const PROVIDER_LABEL: Record<WalletState['provider'], string> = {
   metamask: 'MetaMask',
@@ -22,32 +13,13 @@ const PROVIDER_LABEL: Record<WalletState['provider'], string> = {
 };
 
 export function WalletChip() {
-  const [wallet, setWallet] = useState<WalletState | null>(null);
+  const { wallet, installed, callState, error, connect, disconnect, chainName } = useWallet();
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [installed, setInstalled] = useState(false);
-  const [connecting, setConnecting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [ethPrice, setEthPrice] = useState<number | null>(null);
 
   useEffect(() => {
-    setInstalled(walletInstalled());
-    setWallet(readWallet());
-
-    const onWallet = (e: Event) => {
-      const detail = (e as CustomEvent<WalletState | null>).detail;
-      setWallet(detail);
-    };
-    window.addEventListener('onchainscout:wallet', onWallet);
-
-    const eth = detectProvider();
-    if (eth?.on) {
-      const accountsChanged = () => setWallet(readWallet());
-      const chainChanged = () => setWallet(readWallet());
-      eth.on('accountsChanged', accountsChanged);
-      eth.on('chainChanged', chainChanged);
-    }
-
     const onClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
@@ -67,33 +39,23 @@ export function WalletChip() {
     };
     fetchPrice();
     const i = setInterval(fetchPrice, 60_000);
-
     return () => {
-      window.removeEventListener('onchainscout:wallet', onWallet);
       document.removeEventListener('click', onClickOutside);
       clearInterval(i);
     };
   }, []);
 
   async function onConnect() {
-    setError(null);
-    setConnecting(true);
     try {
-      await connectWallet();
+      await connect();
       setOpen(false);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setConnecting(false);
+    } catch {
+      // error displayed via useWallet.error
     }
   }
 
-  async function onDisconnect() {
-    await disconnectWallet();
-    setOpen(false);
-  }
-
   if (!wallet) {
+    const isConnecting = callState === 'connecting';
     return (
       <div className="relative" ref={ref}>
         <button
@@ -108,34 +70,55 @@ export function WalletChip() {
             <path d="M2 7h12" />
             <circle cx="11" cy="10.5" r="0.8" fill="currentColor" />
           </svg>
-          {connecting ? 'Connecting…' : 'Connect wallet'}
+          {isConnecting ? 'Awaiting…' : 'Connect wallet'}
         </button>
         {open && (
-          <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-lg border border-ink-500/50 bg-bg-800 p-3 shadow-soft">
+          <div className="absolute right-0 top-full z-30 mt-2 w-80 rounded-lg border border-ink-500/50 bg-bg-800 p-3 shadow-soft">
             <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">
               Connect a wallet
             </p>
             {!installed ? (
               <div className="mt-3 space-y-2 text-sm">
-                <p className="text-ink-200">No EIP-1193 wallet detected in this browser.</p>
+                <p className="text-ink-200">
+                  No EIP-1193 wallet detected. Install one to enable auto blast-radius + personalized checks.
+                </p>
                 <div className="flex flex-col gap-1.5">
-                  <a target="_blank" rel="noreferrer" href="https://metamask.io/download/" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">Install MetaMask ↗</a>
-                  <a target="_blank" rel="noreferrer" href="https://www.coinbase.com/wallet/downloads" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">Install Coinbase Wallet ↗</a>
-                  <a target="_blank" rel="noreferrer" href="https://rabby.io/" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">Install Rabby ↗</a>
+                  <a target="_blank" rel="noreferrer" href="https://metamask.io/download/" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">
+                    Install MetaMask ↗
+                  </a>
+                  <a target="_blank" rel="noreferrer" href="https://www.coinbase.com/wallet/downloads" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">
+                    Install Coinbase Wallet ↗
+                  </a>
+                  <a target="_blank" rel="noreferrer" href="https://rabby.io/" className="rounded border border-ink-500/50 px-2.5 py-1.5 text-xs text-ink-100 hover:bg-bg-700">
+                    Install Rabby ↗
+                  </a>
                 </div>
+                <p className="text-[11px] text-ink-400">
+                  OnchainScout reads your address only. No transaction is signed and nothing is broadcast.
+                </p>
               </div>
             ) : (
               <div className="mt-3 space-y-2">
                 <button
                   onClick={onConnect}
-                  disabled={connecting}
+                  disabled={isConnecting}
                   className="focus-ring w-full rounded-md bg-accent-500/15 px-3 py-2 text-xs font-medium text-accent-400 ring-1 ring-inset ring-accent-500/30 hover:bg-accent-500/25 disabled:opacity-50"
                 >
-                  {connecting ? 'Awaiting wallet…' : 'Connect browser wallet'}
+                  {isConnecting ? 'Awaiting wallet…' : 'Connect browser wallet'}
                 </button>
                 <p className="text-[11px] text-ink-300">
-                  OnchainScout will request an account read. No transaction will be signed.
+                  Read-only access. OnchainScout will request your address — no signing.
                 </p>
+                <div className="rounded-md border border-ink-500/40 bg-bg-900/70 p-2 text-[11px] text-ink-300">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-ink-200">
+                    Once connected you get
+                  </p>
+                  <ul className="mt-1 space-y-0.5">
+                    <li>· auto blast-radius on every investigation</li>
+                    <li>· wallet field pre-filled</li>
+                    <li>· personalized scenarios against your positions</li>
+                  </ul>
+                </div>
                 {ethPrice !== null && (
                   <p className="text-[11px] text-ink-300">
                     ETH <span className="font-mono text-ink-100">${ethPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
@@ -154,8 +137,8 @@ export function WalletChip() {
     );
   }
 
-  const chainLabel = CHAIN_NAME[wallet.chainId] ?? `Chain ${wallet.chainId}`;
-  const chainColor = CHAIN_HEX[wallet.chainId] ?? '#71717a';
+  const label = chainName ?? `Chain ${wallet.chainId}`;
+  const color = CHAIN_HEX[wallet.chainId] ?? '#71717a';
 
   return (
     <div className="relative" ref={ref}>
@@ -168,32 +151,46 @@ export function WalletChip() {
       >
         <span
           className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: chainColor, boxShadow: `0 0 8px ${chainColor}40` }}
+          style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}40` }}
         />
         <span className="font-mono">{shortAddress(wallet.address)}</span>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-300">{chainLabel}</span>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-ink-300">{label}</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-lg border border-ink-500/50 bg-bg-800 p-3 shadow-soft">
+        <div className="absolute right-0 top-full z-30 mt-2 w-80 rounded-lg border border-ink-500/50 bg-bg-800 p-3 shadow-soft">
           <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">
             Connected · {PROVIDER_LABEL[wallet.provider]}
           </p>
           <p className="mt-2 break-all font-mono text-xs text-ink-100">{wallet.address}</p>
           <div className="mt-3 flex items-center justify-between gap-2 text-[11px]">
             <span className="text-ink-300">Chain</span>
-            <span className="rounded bg-bg-900 px-1.5 py-0.5 text-ink-100">{chainLabel} · #{wallet.chainId}</span>
+            <span className="rounded bg-bg-900 px-1.5 py-0.5 text-ink-100">
+              {label} · #{wallet.chainId}
+            </span>
+          </div>
+          <div className="mt-3 rounded-md border border-accent-500/30 bg-accent-500/5 p-2 text-[11px]">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-accent-400">
+              Personalized mode
+            </p>
+            <p className="mt-1 text-ink-200">
+              Investigations on this browser auto-run blast-radius against this wallet.
+            </p>
           </div>
           <button
             onClick={() => {
               navigator.clipboard?.writeText(wallet.address);
-              setOpen(false);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1200);
             }}
             className="focus-ring mt-3 w-full rounded-md border border-ink-500/50 px-3 py-1.5 text-xs text-ink-100 hover:bg-bg-700"
           >
-            Copy address
+            {copied ? 'Copied ✓' : 'Copy address'}
           </button>
           <button
-            onClick={onDisconnect}
+            onClick={async () => {
+              await disconnect();
+              setOpen(false);
+            }}
             className="focus-ring mt-2 w-full rounded-md border border-signal-stop/40 bg-signal-stop/10 px-3 py-1.5 text-xs text-signal-stop hover:bg-signal-stop/20"
           >
             Disconnect

@@ -17,11 +17,6 @@ const PRIMARY_NAV = [
   { href: '/report-card', label: 'Honest Report Card', subtitle: 'Self-evaluation', icon: 'chart' },
 ];
 
-const SECONDARY_NAV = [
-  { href: 'https://github.com/pleasuretech43-ETH/onchainscout', label: 'GitHub', external: true },
-  { href: 'https://www.orion.xyz', label: 'Orion Agents', external: true },
-];
-
 export function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const chains = listChains();
@@ -41,40 +36,20 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             const active =
               (item.href === '/' && (pathname === '/' || pathname === '/analyze')) ||
               (item.href !== '/' && pathname?.startsWith(item.href.split('?')[0]));
-            const isExternal = item.href.startsWith('http');
-            const itemEl = (
-              <>
-                <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-ink-200">
-                  <NavIcon name={item.icon} />
-                </span>
-                <span className="grow truncate text-sm">{item.label}</span>
-                {isExternal && <span className="text-[10px] text-ink-300">↗</span>}
-              </>
-            );
             return (
               <li key={item.label}>
-                {isExternal ? (
-                  <a
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`focus-ring flex items-center rounded-md px-2.5 py-1.5 text-ink-100 hover:bg-bg-700/60 ${
-                      active ? 'bg-bg-700/70 text-accent-400' : ''
-                    }`}
-                  >
-                    {itemEl}
-                  </a>
-                ) : (
-                  <Link
-                    href={item.href}
-                    onClick={onNavigate}
-                    className={`focus-ring flex items-center rounded-md px-2.5 py-1.5 text-ink-100 hover:bg-bg-700/60 ${
-                      active ? 'bg-bg-700/70 text-accent-400' : ''
-                    }`}
-                  >
-                    {itemEl}
-                  </Link>
-                )}
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={`focus-ring flex items-center rounded-md px-2.5 py-1.5 text-ink-100 hover:bg-bg-700/60 ${
+                    active ? 'bg-bg-700/70 text-accent-400' : ''
+                  }`}
+                >
+                  <span className="mr-2 inline-flex h-4 w-4 items-center justify-center text-ink-200">
+                    <NavIcon name={item.icon} />
+                  </span>
+                  <span className="grow truncate text-sm">{item.label}</span>
+                </Link>
               </li>
             );
           })}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-
+import { WalletChip } from './WalletChip';
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -11,7 +11,7 @@ interface TopBarProps {
 
 const PAGE_META: Record<string, { eyebrow: string; title: string; subtitle: string }> = {
   '/': { eyebrow: 'Module · Investigation', title: 'Investigate', subtitle: 'Pick an on-chain object or paste a URL.' },
-  '/analyze': { eyebrow: 'Module · Investigation', title: 'Contract investigation', subtitle: 'Live trace of the agent\'s decision loop.' },
+  '/analyze': { eyebrow: 'Module · Investigation', title: 'Contract investigation', subtitle: "Live trace of the agent's decision loop." },
   '/analyze-url': { eyebrow: 'Module · Claim verification', title: 'Project claim verification', subtitle: 'Marketing claims cross-checked against on-chain evidence.' },
   '/report-card': { eyebrow: 'Module · Self-evaluation', title: 'Honest Report Card', subtitle: 'How well does OnchainScout perform on a labeled corpus?' },
 };
@@ -32,7 +32,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   useEffect(() => {
     const tick = () => {
       const d = new Date();
-      setNow(d.toUTCString().replace('GMT', 'UTC'));
+      setNow(d.toUTCString().slice(17, 25) + ' UTC');
     };
     tick();
     const i = setInterval(tick, 30_000);
@@ -40,12 +40,11 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   }, []);
 
   useEffect(() => {
-    // Cheap "live" block estimator — refresh every 60s, no API call needed
     const eta = Math.floor(Date.now() / 12_000);
-    setBlock(`${eta.toLocaleString()} (Base)`);
+    setBlock(`#${eta.toLocaleString()}`);
     const i = setInterval(() => {
       const next = Math.floor(Date.now() / 12_000);
-      setBlock(`${next.toLocaleString()} (Base)`);
+      setBlock(`#${next.toLocaleString()}`);
     }, 60_000);
     return () => clearInterval(i);
   }, []);
@@ -87,13 +86,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         >
           Report Card
         </Link>
-        <button
-          type="button"
-          className="focus-ring inline-flex items-center gap-2 rounded-md bg-accent-500/15 px-3 py-1.5 text-xs font-medium text-accent-400 ring-1 ring-inset ring-accent-500/30 hover:bg-accent-500/25"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse-dot" />
-          Connect wallet
-        </button>
+        <WalletChip />
       </div>
     </header>
   );

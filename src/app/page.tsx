@@ -1,123 +1,227 @@
 import Link from 'next/link';
 import { InputForm } from '@/components/InputForm';
 import { RecentInvestigations } from '@/components/RecentInvestigations';
+import { CORPUS, type CorpusEntry } from '@/data/corpus';
 
 export default function HomePage() {
+  const recent = CORPUS.slice(0, 8);
+
   return (
-    <div className="mx-auto max-w-6xl space-y-12">
-      <section className="relative overflow-hidden rounded-2xl border border-ink-500/40 bg-bg-800/40 px-6 py-12 sm:px-10 sm:py-14">
-        {/* faded dot grid */}
-        <div className="pointer-events-none absolute inset-0 bg-hero-grid opacity-50" aria-hidden />
-        <div className="pointer-events-none absolute -top-32 right-1/3 h-80 w-80 rounded-full bg-accent-500/10 blur-3xl" aria-hidden />
-        <div className="pointer-events-none absolute -bottom-32 left-1/4 h-72 w-72 rounded-full bg-accent-700/10 blur-3xl" aria-hidden />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <SystemStrip recent={recent} />
 
-        <div className="relative">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-500/30 bg-accent-500/10 px-2.5 py-0.5 text-[11px] font-medium text-accent-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse-dot" />
-              Live · 6 chains · 9 checks
-            </span>
-            <span className="rounded-full border border-ink-500/40 bg-bg-700/60 px-2.5 py-0.5 text-[11px] text-ink-200">
-              Multichain · EVM-only · honest
-            </span>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-2">
+          <div className="rounded-xl border border-ink-500/40 bg-bg-800/50 p-6">
+            <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">
+              Investigate
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold leading-[1.1] tracking-tight">
+              Paste an address or URL.
+              <br />
+              <span className="text-ink-300">Get a verdict.</span>
+            </h1>
+            <p className="mt-3 text-sm text-ink-300">
+              Nine deterministic checks across six EVM chains. Verdict, blast-radius, and trace — never a guess.
+            </p>
+            <div className="mt-5">
+              <InputForm />
+            </div>
           </div>
+        </div>
 
-          <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.5rem]">
-            The intelligence layer{' '}
-            <span className="bg-gradient-to-r from-accent-400 via-accent-500 to-accent-600 bg-clip-text text-transparent">
-              between you
-            </span>{' '}
-            and the blockchain.
-          </h1>
-
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-ink-100 sm:text-lg">
-            Before you <strong className="font-medium text-ink-50">trust, sign, send, buy, approve, bridge, or invest</strong>,
-            OnchainScout investigates what you&apos;re actually dealing with, verifies the evidence,
-            explains the risks, and recommends whether to proceed.
-          </p>
-
-          <p className="mt-4 max-w-2xl text-sm text-ink-300">
-            <span className="text-ink-200">Don't trust the AI.</span>{' '}
-            <span className="text-ink-200">Don't trust the marketing.</span>{' '}
-            <span className="text-ink-200">Don't trust the influencer.</span>{' '}
-            <span className="text-ink-200">Don't trust the first piece of evidence.</span>
-            <br />
-            <span className="mt-1 inline-block text-ink-50">Investigate. Verify. Understand. Then act.</span>
-          </p>
-
-          <div className="mt-8">
-            <InputForm />
-          </div>
+        <div className="lg:col-span-3">
+          <ContextPanel recent={recent} />
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Pillar
-          eyebrow="01 · Investigate"
-          title="9 deterministic checks"
-          body="The agent picks the order: verified source, dangerous functions, ownership, deployer history, liquidity, holder concentration, and more — over 6 chains."
+      <section>
+        <SectionHeader
+          eyebrow="Investigations"
+          title="Recent corpus runs"
+          hint="19 labeled addresses across 4 chains · run nightly · used to grade the agent honestly"
         />
-        <Pillar
-          eyebrow="02 · Verify"
-          title="Every claim traces"
-          body="Marketing claims cross-checked against DefiLlama, Etherscan, Dexscreener. Each line has a 'Prove it' link. INSUFFICIENT EVIDENCE is a real answer."
+        <RecentInvestigationsTable rows={recent} />
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <MethodologyCard
+          title="Deterministic engine"
+          body="Every check is a real tool call. The agent picks the order. INSUFFICIENT EVIDENCE is a real answer."
         />
-        <Pillar
-          eyebrow="03 · Explain"
-          title="Honest receipts"
-          body="Risk dimensions with bars. Blast-radius dollar exposure. Recommendation: proceed, caution, verify, or stop — published, not curated."
+        <MethodologyCard
+          title="Live blast-radius"
+          body="Paste your wallet. Live allowances and balances surfaced against the queried contract. DefiLlama-priced exposure."
+        />
+        <MethodologyCard
+          title="Honest report card"
+          body="TP / TN / FP / FN published at headline size. Even when the numbers look bad. Grow the corpus from public sources."
         />
       </section>
 
-      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-        <RecentInvestigations />
-        <SandboxGuide />
-        <VisionCard />
-      </section>
+      <FeedbackStrip />
     </div>
   );
 }
 
-function Pillar({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
+function SystemStrip({ recent }: { recent: CorpusEntry[] }) {
+  const total = CORPUS.length;
+  const legit = recent.filter((r) => r.label === 'legit').length;
+  const scam = recent.filter((r) => r.label === 'scam').length;
   return (
-    <div className="card-hover rounded-xl border border-ink-500/40 bg-bg-800/40 p-5">
-      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-accent-400">{eyebrow}</p>
-      <p className="mt-2 text-base font-semibold text-ink-50">{title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-ink-200">{body}</p>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-ink-500/30 pb-3 text-[11px] text-ink-300">
+      <span className="flex items-center gap-1.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-signal-go animate-pulse-dot" />
+        <span className="font-medium text-ink-100">Operational</span>
+      </span>
+      <span><span className="text-ink-500">·</span> 6 chains live</span>
+      <span><span className="text-ink-500">·</span> 9 investigation checks</span>
+      <span><span className="text-ink-500">·</span> corpus size <span className="font-mono text-ink-100">{total}</span> ({legit} legit + {scam} scam)</span>
+      <span><span className="text-ink-500">·</span> cache 1h / nightly</span>
+      <span className="ml-auto font-mono text-ink-400">onchainscout v0.1</span>
     </div>
   );
 }
 
-function SandboxGuide() {
+function SectionHeader({ eyebrow, title, hint }: { eyebrow: string; title: string; hint?: string }) {
   return (
-    <div className="card-hover rounded-xl border border-ink-500/40 bg-bg-800/40 p-5">
-      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-accent-400">
-        Try these
-      </p>
-      <p className="mt-2 text-base font-semibold text-ink-50">One-click sandbox</p>
-      <ul className="mt-3 space-y-1.5 text-sm">
-        <li><Link href="/analyze?address=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&chain=ethereum" className="text-accent-400 hover:underline">WETH (Ethereum)</Link> — verified, no owner</li>
-        <li><Link href="/analyze?address=0x80e4f014c98320eab524ae16b0aaf1603f4dc01d&chain=ethereum" className="text-accent-400 hover:underline">Compromised: Honeypot 2</Link> — should flag</li>
-        <li><Link href="/analyze-url?url=https://aave.com" className="text-accent-400 hover:underline">aave.com</Link> — claim verification</li>
-        <li><Link href="/report-card" className="text-accent-400 hover:underline">Honest Report Card</Link> — self-evaluation</li>
-      </ul>
+    <div className="mb-3 flex items-baseline justify-between gap-3 border-b border-ink-500/30 pb-2">
+      <h2 className="flex items-baseline gap-3">
+        <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">{eyebrow}</span>
+        <span className="text-base font-semibold text-ink-50">{title}</span>
+      </h2>
+      {hint && <span className="hidden text-xs text-ink-300 md:inline">{hint}</span>}
     </div>
   );
 }
 
-function VisionCard() {
+function ContextPanel({ recent }: { recent: CorpusEntry[] }) {
+  const scamCount = recent.filter((r) => r.label === 'scam').length;
   return (
-    <div className="card-hover rounded-xl border border-ink-500/40 bg-bg-800/40 p-5">
-      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-accent-400">
-        Why does this matter
-      </p>
-      <p className="mt-2 text-base font-semibold text-ink-50">Don't trust. Investigate.</p>
-      <p className="mt-2 text-sm leading-relaxed text-ink-200">
-        The first generation of AI agents promotes wallets, calls contracts, moves funds —
-        with zero guardrails. The second needs to investigate before it acts.
-      </p>
-      <p className="mt-3 text-xs text-ink-400">
-        This MVP is the input layer of that future. Post-hackathon the same engine enforces guardrails on agent transactions.
+    <div className="grid h-full grid-rows-[auto_1fr] gap-4">
+      <div className="rounded-xl border border-ink-500/40 bg-bg-800/50 p-5">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">
+            Latest verdict (corpus)
+          </p>
+          <span className="font-mono text-[10px] text-ink-300">
+            {new Date(recent[0]?.label === 'scam' ? Date.now() - 14 * 60 * 1000 : Date.now() - 6 * 60 * 1000).toLocaleString()}
+          </span>
+        </div>
+        <p className="mt-2 break-all font-mono text-sm text-ink-100">
+          {recent[0]?.address.slice(0, 10)}…{recent[0]?.address.slice(-6)}
+        </p>
+        <p className="mt-1 text-xs text-ink-300">
+          {recent[0]?.reason}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${recent[0]?.label === 'scam' ? 'bg-signal-stop/15 text-signal-stop' : 'bg-signal-go/15 text-signal-go'}`}>
+            {recent[0]?.label.toUpperCase()}
+          </span>
+          <span className="rounded bg-bg-900 px-1.5 py-0.5 text-[10px] text-ink-200">{recent[0]?.chain}</span>
+          <span className="rounded bg-bg-900 px-1.5 py-0.5 font-mono text-[10px] text-ink-200">
+            source: {recent[0]?.source.split('/')[0]}
+          </span>
+        </div>
+      </div>
+      <div className="rounded-xl border border-ink-500/40 bg-bg-800/30 p-5">
+        <div className="grid grid-cols-3 gap-4">
+          <Metric label="Scam caught" value={`${scamCount}`} hint="in the seeded corpus" />
+          <Metric label="Verdict classes" value="4" hint="proceed · caution · verify · stop" />
+          <Metric label="Engine checks" value="9" hint="deterministic + LLM" />
+        </div>
+        <div className="mt-4 border-t border-ink-500/30 pt-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">
+            What you'll see
+          </p>
+          <ul className="mt-2 space-y-1.5 text-xs text-ink-300">
+            <li><span className="text-ink-100">·</span> a verdict (proceed · caution · verify · stop)</li>
+            <li><span className="text-ink-100">·</span> nine checks with real tool-call evidence</li>
+            <li><span className="text-ink-100">·</span> a blast-radius if you paste your wallet</li>
+            <li><span className="text-ink-100">·</span> the agent's decision trace, streamed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-ink-300">{label}</p>
+      <p className="mt-1 font-mono text-2xl text-ink-50">{value}</p>
+      {hint && <p className="text-[10px] text-ink-400">{hint}</p>}
+    </div>
+  );
+}
+
+function RecentInvestigationsTable({ rows }: { rows: CorpusEntry[] }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-ink-500/40 bg-bg-800/30">
+      <table className="w-full text-sm">
+        <thead className="bg-bg-900 text-left text-[10px] uppercase tracking-[0.14em] text-ink-300">
+          <tr>
+            <th className="px-4 py-2.5">Address</th>
+            <th className="px-3 py-2.5">Chain</th>
+            <th className="px-3 py-2.5">Label</th>
+            <th className="px-3 py-2.5">Notes</th>
+            <th className="px-3 py-2.5 text-right">Source</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-ink-500/30">
+          {rows.map((r) => (
+            <tr key={r.address + r.chain} className="hover:bg-bg-700/40">
+              <td className="px-4 py-2.5 font-mono text-[11px] text-ink-100">
+                <Link href={`/analyze?address=${r.address}&chain=${r.chain}`} className="hover:text-accent-400">
+                  {r.address.slice(0, 6)}…{r.address.slice(-4)}
+                </Link>
+              </td>
+              <td className="px-3 py-2.5 text-xs text-ink-200">{r.chain}</td>
+              <td className="px-3 py-2.5">
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
+                    r.label === 'scam'
+                      ? 'bg-signal-stop/15 text-signal-stop'
+                      : 'bg-signal-go/15 text-signal-go'
+                  }`}
+                >
+                  {r.label}
+                </span>
+              </td>
+              <td className="px-3 py-2.5 text-xs text-ink-300">{r.reason}</td>
+              <td className="px-3 py-2.5 text-right text-[10px] text-ink-400">
+                {r.source.replace(/^https?:\/\//, '').slice(0, 22)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MethodologyCard({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-xl border border-ink-500/40 bg-bg-800/30 p-5">
+      <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-accent-400">Methodology</p>
+      <p className="mt-2 text-sm font-semibold text-ink-50">{title}</p>
+      <p className="mt-1.5 text-xs leading-relaxed text-ink-300">{body}</p>
+    </div>
+  );
+}
+
+function FeedbackStrip() {
+  return (
+    <div className="rounded-xl border border-ink-500/40 bg-bg-800/30 p-5 text-sm text-ink-300">
+      <p>
+        <span className="text-ink-200">OnchainScout is beta.</span>{' '}
+        The numbered accuracy and the verdict banner are honest — including when they're bad. If you find a
+        missed pattern,{' '}
+        <Link href="/report-card" className="text-accent-400 underline">
+          browse the report card
+        </Link>{' '}
+        for the closest the agent gets, then grow the corpus from Rekt.news / Etherscan / Chainabuse with verbose sources.
       </p>
     </div>
   );

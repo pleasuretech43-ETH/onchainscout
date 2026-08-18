@@ -1,6 +1,7 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 export async function checkProxyUpgradeable(address: string, chain: ChainId): Promise<CheckResult> {
   const adapter = getAdapter(chain);
@@ -17,11 +18,15 @@ export async function checkProxyUpgradeable(address: string, chain: ChainId): Pr
       summary: 'No source data returned.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
   const isProxy = first.Proxy === '1';
   const implementation = first.Implementation || null;
+  const signals = isProxy
+    ? ['is-proxy', ...(implementation ? [`implementation:${implementation}`] : ['implementation-unknown'])]
+    : ['not-proxy'];
 
   if (isProxy) {
     return {
@@ -37,7 +42,9 @@ export async function checkProxyUpgradeable(address: string, chain: ChainId): Pr
           data: { Implementation: implementation, Proxy: 'EIP-1967' },
         },
       ],
-      signals: ['is-proxy', implementation ? `implementation:${implementation}` : 'implementation-unknown'],
+      signals,
+      confidence: 'strong',
+      why: whyFor(signals),
     };
   }
 
@@ -54,6 +61,8 @@ export async function checkProxyUpgradeable(address: string, chain: ChainId): Pr
         data: { Proxy: first.Proxy, Implementation: null },
       },
     ],
-    signals: ['not-proxy'],
+    signals,
+    confidence: 'strong',
+    why: whyFor(signals),
   };
 }

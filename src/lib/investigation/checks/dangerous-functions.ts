@@ -1,6 +1,7 @@
 import type { CheckResult, RiskLevel } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 interface DangerousFnDef {
   name: string;
@@ -36,6 +37,7 @@ export async function checkDangerousFunctions(address: string, chain: ChainId): 
       summary: 'No ABI returned; cannot enumerate function surface.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
@@ -50,6 +52,7 @@ export async function checkDangerousFunctions(address: string, chain: ChainId): 
       summary: 'ABI malformed.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
@@ -85,5 +88,7 @@ export async function checkDangerousFunctions(address: string, chain: ChainId): 
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

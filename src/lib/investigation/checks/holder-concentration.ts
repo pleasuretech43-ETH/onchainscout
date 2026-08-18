@@ -1,6 +1,7 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 interface TokenHolder {
   TokenHolderAddress: string;
@@ -38,6 +39,7 @@ export async function checkHolderConcentration(
       summary: `Could not retrieve holder list: ${(e as Error).message}`,
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
@@ -49,14 +51,15 @@ export async function checkHolderConcentration(
       summary: 'No holders returned (token may be non-ERC20, or has no transfers).',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
   const top1 = holders[0]?.share ?? 0;
   const top10 = holders.slice(0, 10).reduce((s, h) => s + h.share, 0);
 
-  let status: 'go' | 'caution' | 'stop' = 'go';
   const signals: string[] = [];
+  let status: 'go' | 'caution' | 'stop' = 'go';
   if (top1 > 50) {
     status = 'stop';
     signals.push('top1->50%');
@@ -81,5 +84,7 @@ export async function checkHolderConcentration(
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

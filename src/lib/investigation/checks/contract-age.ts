@@ -1,6 +1,7 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 export async function checkContractAge(address: string, chain: ChainId): Promise<CheckResult> {
   const adapter = getAdapter(chain);
@@ -22,6 +23,7 @@ export async function checkContractAge(address: string, chain: ChainId): Promise
       summary: `Could not determine contract age: ${(e as Error).message}`,
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
@@ -33,13 +35,14 @@ export async function checkContractAge(address: string, chain: ChainId): Promise
       summary: 'No transactions found for this address.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
   const ageDays = Math.floor((Date.now() / 1000 - parseInt(firstTxTimestamp)) / 86_400);
 
+  const signals = [`age-days:${ageDays}`];
   let status: 'go' | 'caution' = 'go';
-  const signals: string[] = [`age-days:${ageDays}`];
   if (ageDays < 1) {
     status = 'caution';
     signals.push('age-<1d');
@@ -64,5 +67,7 @@ export async function checkContractAge(address: string, chain: ChainId): Promise
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

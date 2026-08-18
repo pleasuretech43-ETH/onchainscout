@@ -1,5 +1,6 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 const CHAIN_TO_DEXSCREENER: Record<ChainId, string> = {
   ethereum: 'ethereum',
@@ -43,6 +44,7 @@ export async function checkLiquidity(address: string, chain: ChainId): Promise<C
       summary: `Could not reach Dexscreener: ${(e as Error).message}`,
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
@@ -61,6 +63,8 @@ export async function checkLiquidity(address: string, chain: ChainId): Promise<C
         },
       ],
       signals: ['no-pairs'],
+      confidence: 'strong',
+      why: 'No automated DEX pairs were found on the chain selector. Without pairs, the trade cannot settle.',
     };
   }
 
@@ -69,8 +73,8 @@ export async function checkLiquidity(address: string, chain: ChainId): Promise<C
   const liq = top.liquidity?.usd ?? 0;
   const vol24 = top.volume?.h24 ?? 0;
 
-  let status: 'go' | 'caution' | 'stop' = 'go';
   const signals: string[] = [];
+  let status: 'go' | 'caution' | 'stop' = 'go';
   if (liq < 10_000) {
     status = 'stop';
     signals.push('liquidity-<10k');
@@ -103,5 +107,7 @@ export async function checkLiquidity(address: string, chain: ChainId): Promise<C
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

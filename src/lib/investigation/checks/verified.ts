@@ -1,6 +1,7 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 export async function checkVerified(address: string, chain: ChainId): Promise<CheckResult> {
   const adapter = getAdapter(chain);
@@ -17,13 +18,18 @@ export async function checkVerified(address: string, chain: ChainId): Promise<Ch
       summary: 'Explorer returned no source-code data.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
+
   const verified =
     Boolean(first.SourceCode) &&
     first.SourceCode !== 'Contract source code not verified' &&
     first.SourceCode !== '';
   const proxy = first.Proxy === '1';
+  const signals = verified
+    ? ['source-verified', ...(proxy ? ['is-proxy'] : [])]
+    : ['source-unverified'];
 
   return {
     id: 'verified',
@@ -45,6 +51,8 @@ export async function checkVerified(address: string, chain: ChainId): Promise<Ch
         },
       },
     ],
-    signals: verified ? ['source-verified', ...(proxy ? ['is-proxy'] : [])] : ['source-unverified'],
+    signals,
+    confidence: confidenceFor({ status: verified ? 'go' : 'stop', signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

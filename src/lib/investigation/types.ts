@@ -14,6 +14,8 @@ export type CheckId =
 
 export type RiskLevel = 'go' | 'caution' | 'stop' | 'unknown';
 
+export type Confidence = 'strong' | 'limited' | 'none' | 'unknown';
+
 export interface CheckEvidence {
   source: string;
   url?: string;
@@ -28,21 +30,27 @@ export interface CheckResult {
   summary: string;
   evidence: CheckEvidence[];
   signals: string[];
+  confidence: Confidence;
+  // why this evidence / what to verify
+  why?: string;
 }
 
 export interface TraceStep {
   step: number;
   at: string;
-  checkId: CheckId | 'orchestrator';
+  checkId: CheckId | 'orchestrator' | 'planner' | 'failure-scenarios';
   reasoning: string;
-  decision: 'run' | 'skip' | 'investigate-further';
+  decision: 'run' | 'skip' | 'investigate-further' | 'plan';
   outcome?: string;
+  phase?: 'Discover' | 'Understand' | 'Investigate' | 'Verify' | 'Assess' | 'Synthesize';
 }
 
 export interface RiskDimension {
   name: string;
   level: RiskLevel;
   detail: string;
+  confidence: Confidence;
+  proveIt?: { evidence: CheckEvidence[]; source?: string };
 }
 
 export interface BlastRadiusToken {
@@ -68,6 +76,13 @@ export interface BlastRadiusData {
   finishedAt: string;
 }
 
+export interface FailureScenario {
+  title: string;
+  steps: string[];
+  worstIdentifiableLoss: string | null;
+  why: string;
+}
+
 export interface InvestigationResult {
   address: string;
   chain: ChainId;
@@ -86,6 +101,7 @@ export interface InvestigationResult {
   errors: string[];
   inputType?: 'address' | 'url';
   claims?: VerifiedClaim[];
+  scenarios?: FailureScenario[];
 }
 
 export interface VerifiedClaim {

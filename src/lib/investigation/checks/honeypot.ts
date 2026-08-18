@@ -2,16 +2,6 @@ import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
 
-/**
- * Honeypot / sellability probe.
- *
- * Honest limitation: full honeypot detection (simulating buy→sell) requires a state fork
- * (Tenderly, Foundry). Without one, we can only check whether the contract is even an ERC20
- * (symbol/decimals respond) and flag the verdict as INSUFFICIENT EVIDENCE for tokens that
- * pass that gate. We refuse to guess.
- *
- * Future work: integrate a Tenderly fork or Anvil to do a true sell-simulation.
- */
 export async function checkHoneypot(address: string, chain: ChainId): Promise<CheckResult> {
   const adapter = getAdapter(chain);
 
@@ -20,7 +10,7 @@ export async function checkHoneypot(address: string, chain: ChainId): Promise<Ch
   let symbol = '';
 
   try {
-    const decResult = await adapter.ethCall(address, '0x313ce567'); // decimals()
+    const decResult = await adapter.ethCall(address, '0x313ce567');
     const dec = parseInt(decResult, 16);
     if (!isNaN(dec) && dec <= 36) {
       decimals = dec;
@@ -31,7 +21,7 @@ export async function checkHoneypot(address: string, chain: ChainId): Promise<Ch
   }
 
   try {
-    const symResult = await adapter.ethCall(address, '0x95d89b41'); // symbol()
+    const symResult = await adapter.ethCall(address, '0x95d89b41');
     const hex = symResult.replace(/^0x/, '');
     const buf = Buffer.from(hex, 'hex');
     const end = buf.indexOf(0);
@@ -47,9 +37,10 @@ export async function checkHoneypot(address: string, chain: ChainId): Promise<Ch
       label: 'Honeypot / sellability probe',
       status: 'unknown',
       summary:
-        'Address does not appear to be an ERC20 token (symbol/decimals not responding). Honeypot probe is N/A.',
+        'Address does not appear to be an ERC-20 token (symbol/decimals not responding). Honeypot probe is N/A.',
       evidence: [],
       signals: ['not-erc20'],
+      confidence: 'none',
     };
   }
 
@@ -57,7 +48,7 @@ export async function checkHoneypot(address: string, chain: ChainId): Promise<Ch
     id: 'honeypot',
     label: 'Honeypot / sellability probe',
     status: 'unknown',
-    summary: `Contract responds as an ERC20 (symbol="${symbol}", decimals=${decimals}). Full honeypot detection requires state-fork simulation; we flag this as INSUFFICIENT EVIDENCE rather than guess. Verify on a DEX interface before any buy.`,
+    summary: `Contract responds as an ERC-20 (symbol="${symbol}", decimals=${decimals}). Full honeypot detection requires state-fork simulation; we flag this as INSUFFICIENT EVIDENCE rather than guess. Verify on a DEX interface before any buy.`,
     evidence: [
       {
         source: `${adapter.chain.rpc.http} eth_call (decimals 0x313ce567 + symbol 0x95d89b41)`,
@@ -66,5 +57,6 @@ export async function checkHoneypot(address: string, chain: ChainId): Promise<Ch
       },
     ],
     signals: ['is-erc20', 'honeypot-undetectable-without-state-fork'],
+    confidence: 'none',
   };
 }

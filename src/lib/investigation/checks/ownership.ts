@@ -1,11 +1,11 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 export async function checkOwnership(address: string, chain: ChainId): Promise<CheckResult> {
   const adapter = getAdapter(chain);
 
-  // owner() selector = 0x8da5cb5b
   let ownerResult: string | null = null;
   try {
     const result = await adapter.ethCall(address, '0x8da5cb5b');
@@ -51,5 +51,7 @@ export async function checkOwnership(address: string, chain: ChainId): Promise<C
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

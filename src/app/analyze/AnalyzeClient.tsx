@@ -8,6 +8,7 @@ import { RecommendationBanner } from '@/components/RecommendationBanner';
 import { CheckCard } from '@/components/CheckCard';
 import { TraceView } from '@/components/TraceView';
 import { BlastRadiusView } from '@/components/BlastRadiusView';
+import { FailureScenarios } from '@/components/FailureScenarios';
 
 export function AnalyzeClient() {
   const sp = useSearchParams();
@@ -143,7 +144,12 @@ export function AnalyzeClient() {
           )}
 
           <section>
-            <h2 className="mb-4 text-lg font-semibold">Risk dimensions</h2>
+            <h2 className="mb-3 flex items-baseline justify-between text-lg font-semibold">
+              <span>Risk dimensions</span>
+              <span className="text-[11px] font-normal uppercase tracking-[0.18em] text-ink-300">
+                {result.riskDimensions.length} dimension{result.riskDimensions.length === 1 ? '' : 's'}
+              </span>
+            </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {result.riskDimensions.map((d) => (
                 <CheckCard key={d.name} dimension={d} />
@@ -157,6 +163,12 @@ export function AnalyzeClient() {
               )}
             </div>
           </section>
+
+          {result.scenarios && result.scenarios.length > 0 && (
+            <section>
+              <FailureScenarios scenarios={result.scenarios} />
+            </section>
+          )}
 
           <section>
             <h2 className="mb-4 text-lg font-semibold">Plain-English verdict</h2>

@@ -17,6 +17,20 @@ const LEVEL_TONE: Record<string, string> = {
   unknown: 'border-ink-500/40 bg-bg-700/30',
 };
 
+const CONFIDENCE_TONE: Record<string, string> = {
+  strong: 'text-signal-go border-signal-go/40',
+  limited: 'text-signal-caution border-signal-caution/40',
+  none: 'text-signal-unknown border-ink-500/40',
+  unknown: 'text-signal-unknown border-ink-500/40',
+};
+
+const CONFIDENCE_LABEL: Record<string, string> = {
+  strong: 'Confidence: strong',
+  limited: 'Confidence: limited',
+  none: 'INSUFFICIENT EVIDENCE',
+  unknown: 'Confidence: low',
+};
+
 const LEVEL_EXPLAIN: Record<string, string> = {
   go: 'No risk signals in this check. The evidence either confirms expected safe behavior or is missing benign attributes.',
   caution:
@@ -39,6 +53,7 @@ const CHECK_ICONS: Record<string, string> = {
 
 export function CheckCard({ dimension }: { dimension: RiskDimension }) {
   const [open, setOpen] = useState(false);
+  const hasProveIt = Boolean(dimension.proveIt?.evidence?.length);
 
   return (
     <div className={`card-hover rounded-xl border ${LEVEL_TONE[dimension.level]} p-4`}>
@@ -58,7 +73,7 @@ export function CheckCard({ dimension }: { dimension: RiskDimension }) {
           {icon(CHECK_ICONS[dimension.name] ?? 'unknown')}
         </span>
         <p className="grow text-sm font-medium text-ink-50">{dimension.name}</p>
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-center gap-2">
           <span className={`signal-dot ${dimension.level}`} />
           <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-300">
             {LEVEL_LABEL[dimension.level]}
@@ -66,19 +81,67 @@ export function CheckCard({ dimension }: { dimension: RiskDimension }) {
         </span>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-ink-200">{dimension.detail}</p>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="focus-ring mt-3 inline-flex items-center gap-1 text-[11px] text-ink-300 hover:text-ink-100"
-      >
-        <span>{open ? '−' : '+'}</span>
-        <span>Why this verdict?</span>
-      </button>
-      {open && (
-        <p className="mt-2 border-t border-ink-500/30 pt-2 text-[11px] leading-relaxed text-ink-300">
-          {LEVEL_EXPLAIN[dimension.level] ?? LEVEL_EXPLAIN.unknown}
+      <div className="mt-2 flex items-center justify-between">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${CONFIDENCE_TONE[dimension.confidence] ?? CONFIDENCE_TONE.unknown}`}
+        >
+          {CONFIDENCE_LABEL[dimension.confidence]}
+        </span>
+        <div className="flex items-center gap-2">
+          {hasProveIt && (
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="focus-ring inline-flex items-center gap-1 rounded-md border border-accent-500/40 bg-accent-500/10 px-2 py-0.5 text-[11px] font-medium text-accent-400 hover:bg-accent-500/20"
+            >
+              <span>Prove it</span>
+              <span>{open ? '−' : '+'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {hasProveIt && open && dimension.proveIt && (
+        <div className="mt-3 border-t border-ink-500/30 pt-3">
+          <ProveItDrawer proveIt={dimension.proveIt} />
+        </div>
+      )}
+
+      {!hasProveIt && open && (
+        <p className="mt-3 border-t border-ink-500/30 pt-3 text-[11px] leading-relaxed text-ink-300">
+          <strong>Why this verdict?</strong>{' '}
+          {LEVEL_EXPLAIN[dimension.level]}
         </p>
       )}
+    </div>
+  );
+}
+
+function ProveItDrawer({ proveIt }: { proveIt: NonNullable<RiskDimension['proveIt']> }) {
+  return (
+    <div className="rounded-md border border-ink-500/30 bg-bg-900 p-3 text-xs">
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-accent-400">
+        <span>Raw evidence</span>
+        <span className="h-px flex-1 bg-ink-500/40" />
+        <span className="text-ink-300">{new Date(proveIt.evidence[0]?.timestamp ?? Date.now()).toLocaleTimeString()}</span>
+      </div>
+      <div className="mt-2 space-y-2">
+        {proveIt.evidence.map((e, i) => (
+          <div key={i} className="rounded border border-ink-500/30 bg-bg-800 p-2">
+            <p className="text-[11px] text-ink-300">
+              <strong className="text-ink-200">Tool call:</strong> {e.source}
+            </p>
+            {e.url && (
+              <a href={e.url} target="_blank" rel="noreferrer" className="text-[11px] text-accent-400 underline">
+                Open on explorer
+              </a>
+            )}
+            <pre className="mt-1 max-h-48 overflow-auto rounded bg-bg-900 p-2 font-mono text-[10px] text-ink-300">
+              {JSON.stringify(e.data, null, 2)}
+            </pre>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { CheckResult } from '../types';
 import type { ChainId } from '@/lib/chains';
 import { getAdapter } from '@/lib/chains';
+import { confidenceFor, whyFor } from '../meta';
 
 interface ContractCreation {
   contractCreator: string;
@@ -42,10 +43,10 @@ export async function checkDeployerHistory(address: string, chain: ChainId): Pro
       summary: 'Could not determine deployer address.',
       evidence: [],
       signals: [],
+      confidence: 'none',
     };
   }
 
-  // Count other contracts deployed by this address — heuristic via txlist "to === ''" creations.
   let otherContractsCount = 0;
   let otherContractsSample: string[] = [];
   try {
@@ -57,7 +58,7 @@ export async function checkDeployerHistory(address: string, chain: ChainId): Pro
     // best effort
   }
 
-  const signals: string[] = [`deployer:${deployer}`];
+  const signals = [`deployer:${deployer}`];
   let status: 'go' | 'caution' = 'go';
   if (otherContractsCount > 20) {
     status = 'caution';
@@ -80,5 +81,7 @@ export async function checkDeployerHistory(address: string, chain: ChainId): Pro
       },
     ],
     signals,
+    confidence: confidenceFor({ status, signals, evidence: [{}] }) as CheckResult['confidence'],
+    why: whyFor(signals),
   };
 }

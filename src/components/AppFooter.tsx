@@ -51,18 +51,16 @@ export function AppFooter() {
 
   return (
     <footer className="border-t border-ink-500/40 bg-bg-800/40">
-      <div className="grid grid-cols-2 gap-6 px-6 py-6 text-xs sm:grid-cols-4 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-6 px-6 py-6 text-xs sm:grid-cols-4 lg:grid-cols-5">
         <Stat label="Block" value={chainStats.height} hint="Ethereum mainnet" />
         <Stat label="Gas (avg)" value={chainStats.baseFee} hint="live RPC poll · 30s" />
         <Stat label="Transfer cost" value={chainStats.gas} hint="21000 gas · ETH" />
         <Stat label="Networks" value="6 EVMs" hint="Ethereum · Base · Arb · OP · Poly · BNB" />
         <Stat label="Investigation checks" value="9" hint="deterministic engine" />
-        <Stat label="Submission deadline" value="Sep 2, 23:59 UTC" hint="Orion Builder Hackathon" status="caution" />
       </div>
       <div className="flex flex-col gap-3 border-t border-ink-500/30 px-6 py-4 text-[11px] text-ink-300 sm:flex-row sm:items-center sm:justify-between">
         <span>
-          OnchainScout · Orion Builder Hackathon entry ·{' '}
-          <span className="text-ink-200">9 deterministic checks across 6 EVMs</span>
+          <span className="text-ink-200">OnchainScout</span> · 9 deterministic checks across 6 EVMs
         </span>
         <span className="flex items-center gap-3">
           <Link href="/" className="hover:text-ink-100">Home</Link>
@@ -71,10 +69,6 @@ export function AppFooter() {
           <span className="text-ink-500">·</span>
           <a href="https://etherscan.io/apis" target="_blank" rel="noreferrer" className="hover:text-ink-100">
             Get Etherscan key
-          </a>
-          <span className="text-ink-500">·</span>
-          <a href="https://github.com/pleasuretech43-ETH/onchainscout" target="_blank" rel="noreferrer" className="hover:text-ink-100">
-            GitHub
           </a>
         </span>
       </div>

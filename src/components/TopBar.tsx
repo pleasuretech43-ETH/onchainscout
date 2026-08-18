@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Brand } from './Brand';
+
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -62,10 +62,6 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
         </svg>
       </button>
-
-      <div className="hidden lg:block">
-        <Brand compact />
-      </div>
 
       <nav className="flex min-w-0 grow items-center gap-2 px-2 lg:px-4">
         <div className="hidden md:block">

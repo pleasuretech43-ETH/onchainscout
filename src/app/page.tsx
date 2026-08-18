@@ -15,10 +15,10 @@ export default function HomePage() {
           <div className="mb-4 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-accent-500/30 bg-accent-500/10 px-2.5 py-0.5 text-[11px] font-medium text-accent-400">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-500 animate-pulse-dot" />
-              Live · Orion Builder Hackathon
+              Live · 6 chains · 9 checks
             </span>
             <span className="rounded-full border border-ink-500/40 bg-bg-700/60 px-2.5 py-0.5 text-[11px] text-ink-200">
-              Multichain · 6 EVMs · 9 checks
+              Multichain · EVM-only · honest
             </span>
           </div>
 
@@ -73,15 +73,6 @@ export default function HomePage() {
         <RecentInvestigations />
         <SandboxGuide />
         <VisionCard />
-      </section>
-
-      <section className="rounded-xl border border-ink-500/40 bg-bg-800/30 px-6 py-5 text-center text-xs text-ink-300">
-        <p>
-          <span className="text-ink-200">Submission deadline:</span>{' '}
-          <span className="text-signal-caution">September 2, 2026 · 23:59 UTC</span>{' '}
-          <span className="text-ink-500">·</span>{' '}
-          Wallet ignition fee paid on Base · Demo URL: github.com/pleasuretech43-ETH/onchainscout
-        </p>
       </section>
     </div>
   );

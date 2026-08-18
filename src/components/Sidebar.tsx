@@ -105,25 +105,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       </div>
 
       <div className="mt-auto border-t border-ink-500/40 px-5 py-4">
-        <ul className="mb-3 space-y-0.5">
-          {SECONDARY_NAV.map((item) => (
-            <li key={item.label}>
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className="focus-ring flex items-center rounded-md px-2.5 py-1.5 text-sm text-ink-200 hover:bg-bg-700/60 hover:text-ink-50"
-              >
-                <span className="grow truncate">{item.label}</span>
-                <span className="text-[10px] text-ink-300">↗</span>
-              </a>
-            </li>
-          ))}
-        </ul>
         <div className="flex items-center gap-2 rounded-md bg-bg-900/60 px-2.5 py-2 text-[11px] text-ink-300">
           <StatusDot status="live" />
           <span className="grow">Live · 6 chains</span>
-          <span className="font-mono text-ink-400">v0.1.0</span>
         </div>
       </div>
     </nav>
